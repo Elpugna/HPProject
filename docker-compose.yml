@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  balthasar:
+    image: cassandra:4.0.3
+    container_name: "balthasar"
+    ports:
+      - "9042:9042"
+    healthcheck:
+      test: [ "CMD", "cqlsh", "-e", "describe keyspaces" ]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+    environment: &environment
+      CASSANDRA_CLUSTER_NAME: akka-hpproject-cluster
+      CASSANDRA_SEEDS: "balthasar"
+      MAX_HEAP_SIZE: 1G
+      HEAP_NEWSIZE: 200M
+  caspar:
+    image: cassandra:4.0.3
+    container_name: "caspar"
+    ports:
+      - "9043:9042"
+    healthcheck:
+      test: [ "CMD", "cqlsh", "-e", "describe keyspaces" ]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+    environment: *environment
+    depends_on:
+      balthasar:
+        condition: service_healthy
+  melchior:
+    image: cassandra:4.0.3
+    container_name: "melchior"
+    ports:
+      - "9044:9042"
+    healthcheck:
+      test: [ "CMD", "cqlsh", "-e", "describe keyspaces" ]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+    environment: *environment
+    depends_on:
+      caspar:
+        condition: service_healthy
