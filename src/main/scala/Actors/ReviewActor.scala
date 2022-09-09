@@ -1,12 +1,12 @@
 package com.applaudostudios.fcastro.HPProject
+package Actors
+
+import Actors.ReviewActor._
+import Data.Review
 
 import akka.actor.{ActorLogging, ActorRef, Props}
 import akka.http.scaladsl.model.DateTime
 import akka.persistence.{PersistentActor, SnapshotOffer}
-import com.applaudostudios.fcastro.HPProject.Data.Review
-import com.applaudostudios.fcastro.HPProject.ReviewActor._
-
-import scala.collection.mutable
 
 
 object ReviewActor{
@@ -16,15 +16,18 @@ object ReviewActor{
   case class  Create(product: Review)
   case object Read
   case class  Update(product: Review)
-  case class  AddReview(id: String)
-  case class  RemoveReview(id: String)
+  case class SetCustomer(customer: Long)
+  case class SetProduct(product:String)
   case object End
 
   //Events
-  case class  ReviewCreated(initial: Review)
-  case class  ReviewUpdated(product: Review)
+  case class  ReviewCreated(initial: Review) extends MySerializable
+  case class  ReviewUpdated(review: Review) extends MySerializable
+  case class CustomerSet(id:Long) extends MySerializable
+  case class ProductSet(id:String) extends MySerializable
+  case class ReviewState(var opCount:Long=0,var review: Review) extends MySerializable
 
-  case class ReviewState(var opCount:Long=0,var review: Review, var reviews: mutable.Set[String]=mutable.LinkedHashSet[String]())
+
 }
 
 
@@ -55,9 +58,9 @@ class ReviewActor(id:String,store:ActorRef) extends PersistentActor with ActorLo
   override def receiveRecover: Receive = {
     case ReviewUpdated(updated) => applyUpdates(updated)
     case ReviewCreated(initial) => state.review = initial
-    case ReviewAdded(id) => state.reviews.addOne(id)
-    case ReviewRemoved(id) => state.reviews.remove(id)
-    case SnapshotOffer(meta,snap:ReviewState) => state=snap
+    case SetCustomer(customer) => state.review= state.review.copy(customer=customer)
+    case SetProduct(product) => state.review= state.review.copy(product=product)
+    case SnapshotOffer(_,snap:ReviewState) => state=snap
   }
 
   override def receiveCommand: Receive = {
@@ -66,26 +69,25 @@ class ReviewActor(id:String,store:ActorRef) extends PersistentActor with ActorLo
     case Create(initial) =>
       persist(ReviewCreated(initial)){ createEvent=>
         state.review=createEvent.initial
-        sender() ! (state.review)
+        sender() ! state.review
       }
     case Update(updated) =>
       persist(ReviewUpdated(updated)){ updateEvent=>
-        applyUpdates(updateEvent.product)
-        sender() ! (state.review)
+        applyUpdates(updateEvent.review)
+        sender() ! state.review
         testAndSnap()
       }
-    case AddReview(id) =>
-      persist(ReviewAdded(id)) { rA=>
-        state.reviews.addOne(id)
-        testAndSnap()
-      }
-    case RemoveReview(id) =>
-      persist(ReviewRemoved(id)) { rA=>
-        state.reviews.remove(id)
-        testAndSnap()
-      }
-    case End =>
-      context.stop(self)
+    case SetCustomer(id) => persist(CustomerSet(id)){ _=>
+      state.review= state.review.copy(customer = id)
+      sender() ! state.review
+      testAndSnap()
+    }
+    case SetProduct(id) => persist(ProductSet(id)){ _ =>
+      log.info(s"Set product to $id")
+      state.review= state.review.copy(product = id)
+      sender() ! state.review
+      testAndSnap()
+    }
   }
 
   override def persistenceId: String = s"review-actor-$id"

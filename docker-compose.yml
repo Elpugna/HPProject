@@ -6,6 +6,8 @@ services:
     container_name: "balthasar"
     ports:
       - "9042:9042"
+    volumes: &volumes
+      - /src/main/resources/cassandra.yaml:/ect/cassandra/cassandra.yaml
     healthcheck:
       test: [ "CMD", "cqlsh", "-e", "describe keyspaces" ]
       interval: 5s
@@ -14,13 +16,14 @@ services:
     environment: &environment
       CASSANDRA_CLUSTER_NAME: akka-hpproject-cluster
       CASSANDRA_SEEDS: "balthasar"
-      MAX_HEAP_SIZE: 1G
+      MAX_HEAP_SIZE: 2G
       HEAP_NEWSIZE: 200M
   caspar:
     image: cassandra:4.0.3
     container_name: "caspar"
     ports:
       - "9043:9042"
+    volumes: *volumes
     healthcheck:
       test: [ "CMD", "cqlsh", "-e", "describe keyspaces" ]
       interval: 5s
@@ -35,6 +38,7 @@ services:
     container_name: "melchior"
     ports:
       - "9044:9042"
+    volumes: *volumes
     healthcheck:
       test: [ "CMD", "cqlsh", "-e", "describe keyspaces" ]
       interval: 5s

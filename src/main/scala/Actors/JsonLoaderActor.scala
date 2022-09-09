@@ -1,7 +1,7 @@
 package com.applaudostudios.fcastro.HPProject
 package Actors
 
-import Actors.JsonLoaderActor.{JsonContents, LoadFile}
+import Actors.JsonLoaderActor.{JsonContents, JsonEntryProtocol, LoadFile}
 import Actors.StoreActor._
 import Data._
 
@@ -16,13 +16,14 @@ import spray.json._
 
 import java.io.FileNotFoundException
 import java.nio.file.{Files, Paths}
+import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
 import scala.util.Failure
 
 object JsonLoaderActor{
-  def props(store:ActorRef)=Props(new JsonLoaderActor(store))
+  def props(store:ActorRef): Props =Props(new JsonLoaderActor(store))
 
-  case class LoadFile(file: String)
+  case class LoadFile(file: String,start: Long = 0)
   case class JsonContents(
   marketplace: String,
   customer_id: Long,
@@ -40,18 +41,18 @@ object JsonLoaderActor{
   review_body: String,
   review_date: String
   )
-}
 trait JsonEntryProtocol extends DefaultJsonProtocol{
 
   implicit object MyStringJsonFormat extends JsonFormat[String] {
-    def write(x: String) = JsString(x)
-    def read(value: JsValue) = value match {
+    def write(x: String): JsString = JsString(x)
+    def read(value: JsValue): String = value match {
       case JsNumber(x) if x.isValidLong => x.toString()
       case JsString(x) => x
       case x => deserializationError("Expected String as JsString, but got " + x)
     }
   }
   implicit def formatter: RootJsonFormat[JsonContents] = jsonFormat15(JsonContents.apply)
+}
 }
 
 class JsonLoaderActor(store:ActorRef) extends Actor with ActorLogging with SprayJsonSupport with JsonEntryProtocol with ReviewProtocol {
@@ -75,37 +76,22 @@ class JsonLoaderActor(store:ActorRef) extends Actor with ActorLogging with Spray
   implicit val system: ActorSystem = context.system
 
   override def receive: Receive = {
-    case LoadFile(file) if Files.exists(Paths.get(file))  =>
-      val path = Paths.get(file);
-      sender() ! s"OK, loading $path"
-      var i =0
+    case LoadFile(file,start:Long) if Files.exists(Paths.get(file))  =>
+      val path = Paths.get(file)
+      sender() ! s"OK, loading $path starting from $start"
       val source = FileIO.fromPath(path)
       val selectJson: Flow[ByteString, ByteString, NotUsed] = JsonReader.select("$[*]")
       val parseJson: Flow[ByteString, (Customer, Product, Review), NotUsed] = Flow.fromFunction{ str:ByteString=>
-        i=i+1
-        log.info(s"Parsing #$i: ${str.utf8String}")
         val v = str.utf8String.parseJson.convertTo[JsonContents]
-        log.info(s"Got $v")
         toData(v)
       }
       source
-      .via(selectJson)
+      .via(selectJson.drop(start).throttle(50,1 seconds))
       .via(parseJson)
       .mapConcat{case (c:Customer,p:Product,r:Review)=>List(CreateCustomer(c),CreateProduct(p),CreateReview(r))}
-      .via(Flow.fromFunction{a=>log.info(s"#$i: Generated Message ${a.toString}");a})
       .to(Sink.actorRefWithBackpressure(store,MassLoadStarted,MassLoadOver,t=>MassLoadFailure(t)))
       .run()
-      /*.to(sink=Sink.foreach{
-        case (c:Customer,p:Product,r:Review) =>
-          log.info(s"Loading #$i: ${(c,p,r)}")
-          store ! CreateCustomer(c)
-          store ! CreateProduct(p)
-          val rev = Await.result(store ? CreateReview(r),250 millis) // wait for last message to reduce throughput, ease pressure
-          log.info(s"Review #$i: Got${(rev.toString)}")
-          i+=1
-      }
-    ).run()*/
-    case LoadFile(path) => sender() ! Failure(new FileNotFoundException())
+    case LoadFile(_,_) => sender() ! Failure(new FileNotFoundException())
     case a:Any => sender() ! s"Got un-matching: $a"
   }
 }

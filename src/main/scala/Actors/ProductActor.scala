@@ -1,34 +1,35 @@
 package com.applaudostudios.fcastro.HPProject
 package Actors
 
+import Actors.ProductActor._
+import Actors.StoreActor.{ReadReviewIdList, ReadReviewList}
+import Data._
+
 import akka.actor.{ActorLogging, ActorRef, Props}
 import akka.persistence.{PersistentActor, SnapshotOffer}
-import com.applaudostudios.fcastro.HPProject.Actors.ProductActor._
-import com.applaudostudios.fcastro.HPProject.Actors.StoreActor.ReadReviewList
-import com.applaudostudios.fcastro.HPProject.Data
-import com.applaudostudios.fcastro.HPProject.Data.Product
 
 import scala.collection.mutable
-import scala.util.Success
+import scala.util.Failure
 
 
 object ProductActor{
  def props(id:String,store:ActorRef): Props = Props(new ProductActor(id,store))
+
   //Commands
   case class  Create(product: Data.Product)
   case object Read
   case object ReadReviews
   case class  Update(product: Data.Product)
-  case class  AddReview(id: String)
   case object End
 
-  case class ProductCreated(initial: Data.Product)
-  case class ProductUpdated(product: Data.Product)
+  //Events
+  case class ProductCreated(initial: Data.Product) extends MySerializable
+  case class ProductUpdated(product: Data.Product) extends MySerializable
 
-  case class ProductState(var opCount:Long,var product:Product, var reviews:mutable.Set[String])
+  case class ProductState(var opCount:Long,var product:Product, var reviews:mutable.Set[String]) extends MySerializable
 }
 
-//Events
+
 
 
 case class ProductActor(id: String,store:ActorRef) extends PersistentActor with ActorLogging{
@@ -55,28 +56,36 @@ case class ProductActor(id: String,store:ActorRef) extends PersistentActor with 
     case ProductUpdated(updated) => applyUpdates(updated)
     case ProductCreated(initial) => state.product = initial
     case ReviewAdded(review) => state.reviews.addOne(review)
-    case SnapshotOffer(meta,snap:ProductState) => state=snap
+    case ReviewRemoved(review) => state.reviews.remove(review)
+    case SnapshotOffer(_,snap:ProductState) => state=snap
   }
 
   override def receiveCommand: Receive = {
     case Read => sender() ! state.product
+    case ReadReviewIds =>
+      store forward ReadReviewIdList(state.reviews.toList)
     case ProductActor.ReadReviews =>
       store forward  ReadReviewList(state.reviews.toList)
     case Create(initial) => persist(ProductCreated(initial)){ createEvent=>
       state.product=createEvent.initial
-      sender() ! (state.product)
+      sender() ! state.product
     }
     case Update(updated) => persist(ProductUpdated(updated)){ updateEvent=>
       applyUpdates(updateEvent.product)
-      sender() ! (state.product)
+      sender() ! state.product
       testAndSnap()
     }
     case AddReview(id) =>
-      persist(ReviewAdded(id)) { rA=>
+      persist(ReviewAdded(id)) { _=>
         state.reviews.addOne(id)
         testAndSnap()
       }
-    case End => context.stop(self)
+    case RemoveReview(id) if state.reviews.contains(id) =>
+      persist(ReviewRemoved(id)) { _=>
+        testAndSnap()
+        sender() ! state.reviews.remove(id)
+      }
+    case RemoveReview(id) => sender() ! Failure(NotFoundException(s"Product did not have Review $id"))
   }
 
   override def persistenceId: String = s"product-actor-$id"

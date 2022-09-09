@@ -1,0 +1,2 @@
+write_request_timeout_in_ms: 10000ms
+read_request_timeout_in_ms: 10000ms

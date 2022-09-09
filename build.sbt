@@ -5,11 +5,13 @@ ThisBuild / scalaVersion := "2.13.8"
 val AkkaVersion = "2.6.19"
 val AkkaHttpVersion = "10.2.9"
 
-lazy val root = (project in file("."))
+
+lazy val root = (project in file(".")).enablePlugins(Cinnamon)
   .settings(
     name := "HPProject",
     idePackagePrefix := Some("com.applaudostudios.fcastro.HPProject")
   )
+
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor-typed"           % AkkaVersion,
@@ -32,10 +34,27 @@ libraryDependencies ++=Seq(
   "com.typesafe.akka" %% "akka-discovery"             % AkkaVersion,
   "com.datastax.oss"  %  "java-driver-core"           % "4.14.1",
   "com.typesafe.akka" %% "akka-persistence-typed"     % AkkaVersion,
-  "com.typesafe.akka" %% "akka-persistence-cassandra" % "1.0.5"
+  "com.typesafe.akka" %% "akka-persistence-cassandra" % "1.0.6"
 )
 
 libraryDependencies ++= Seq(
   "io.spray" %%  "spray-json"                         % "1.3.6",
-  "com.typesafe.akka" %% "akka-http-spray-json"       % AkkaHttpVersion,
+  "com.typesafe.akka" %% "akka-http-spray-json"       % AkkaHttpVersion
 )
+
+libraryDependencies ++= Seq(
+  Cinnamon.library.cinnamonAkka,
+  Cinnamon.library.cinnamonPrometheus,
+  Cinnamon.library.cinnamonPrometheusHttpServer,
+  Cinnamon.library.cinnamonCHMetrics,
+  Cinnamon.library.cinnamonAkkaTyped,
+  Cinnamon.library.cinnamonAkkaPersistence,
+  Cinnamon.library.cinnamonAkkaStream,
+  Cinnamon.library.cinnamonAkkaProjection,
+  Cinnamon.library.cinnamonAkkaHttp,
+  Cinnamon.library.cinnamonAkkaGrpc
+)
+
+run / cinnamon := true
+test / cinnamon := true
+cinnamonLogLevel := "INFO"
