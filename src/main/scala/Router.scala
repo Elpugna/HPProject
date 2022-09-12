@@ -23,10 +23,12 @@ case class Router(store:ActorRef,loader:ActorRef) extends SprayJsonSupport with 
     case NotFoundException(message) => complete(404,message)
     case AlreadyExistsException(message) => complete(400,message)
   }
-
   def routes:Route = {
     pathEndOrSingleSlash{
-      getFromResource("html/index.html")
+      getFromResource("web/index.html")
+    } ~
+    path(Remaining) { resource =>
+      getFromResource("web/"+resource)
     } ~
     pathPrefix("api"){
     handleExceptions(exceptionHandler){

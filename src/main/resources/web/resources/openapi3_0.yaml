@@ -1,0 +1,682 @@
+openapi: 3.0.3
+info:
+  title: HPProject
+  version: 1.0.0
+  contact: {}
+servers:
+  - url: localhost
+  - url: http://localhost
+paths:
+  /api/customer:
+    get:
+      tags:
+        - Customer
+      summary: Get Customers (paged)
+      description: Get Customers on a page-by-page basis, or omit page to get all.
+      operationId: getCustomersPaged
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: string
+            example: '5'
+        - name: length
+          in: query
+          schema:
+            type: string
+            example: '30'
+        - name: media-type
+          in: header
+          schema:
+            type: string
+            example: application/json
+      responses:
+        '200':
+          description: ''
+    put:
+      tags:
+        - Customer
+      summary: Update Customer by ID
+      description: Update Customer by ID
+      operationId: updateCustomerById
+      parameters:
+        - name: id
+          in: query
+          schema:
+            type: string
+            example: '35'
+        - name: media-type
+          in: header
+          schema:
+            type: string
+            example: application/json
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                  example: '35'
+                name:
+                  type: string
+                  example: Test Edit
+            example:
+              id: '35'
+              name: Test Edit
+      responses:
+        '200':
+          description: ''
+    post:
+      tags:
+        - Customer
+      summary: Create Customer
+      description: Create Customer
+      operationId: createCustomer
+      parameters:
+        - name: media-type
+          in: header
+          schema:
+            type: string
+            example: application/json
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: number
+                  example: 1
+                name:
+                  type: string
+                  example: ''
+            example:
+              id: 1
+              name: ''
+      responses:
+        '200':
+          description: ''
+    delete:
+      tags:
+        - Customer
+      summary: Delete Customer by ID
+      description: Delete Customer by ID
+      operationId: deleteCustomerById
+      parameters:
+        - name: id
+          in: query
+          schema:
+            type: string
+            example: '34'
+        - name: media-type
+          in: header
+          schema:
+            type: string
+            example: application/json
+      responses:
+        '200':
+          description: ''
+  /api/customer/1428894:
+    get:
+      tags:
+        - Customer
+      summary: Get Customer by ID
+      description: Get Customer by ID
+      operationId: getCustomerById
+      parameters:
+        - name: media-type
+          in: header
+          schema:
+            type: string
+            example: application/json
+      responses:
+        '200':
+          description: ''
+  /api/customer/reviews/all:
+    get:
+      tags:
+        - Customer
+      summary: Get Customer Reviewed Products by ID
+      description: Get Customer Reviewed Products by ID
+      operationId: getCustomerReviewedProductsById
+      parameters:
+        - name: id
+          in: query
+          schema:
+            type: string
+            example: '1'
+        - name: media-type
+          in: header
+          schema:
+            type: string
+            example: application/json
+      responses:
+        '200':
+          description: ''
+  /api/customer/reviews/id:
+    get:
+      tags:
+        - Customer
+      summary: Get Customer Review IDs by ID
+      description: Get Customer Review IDs by ID
+      operationId: getCustomerReviewIdsById
+      parameters:
+        - name: id
+          in: query
+          schema:
+            type: string
+            example: '1'
+        - name: media-type
+          in: header
+          schema:
+            type: string
+            example: application/json
+      responses:
+        '200':
+          description: ''
+  /api/product/:
+    get:
+      tags:
+        - Product
+      summary: Get Product by ID
+      description: Get Product by ID
+      operationId: getProductById
+      parameters:
+        - name: id
+          in: query
+          schema:
+            type: string
+            example: R12345
+        - name: media-type
+          in: header
+          schema:
+            type: string
+            example: application/json
+      responses:
+        '200':
+          description: ''
+  /api/product/reviews/all:
+    get:
+      tags:
+        - Product
+      summary: Get Product Reviews by ID
+      description: Get Product Reviews by ID
+      operationId: getProductReviewsById
+      parameters:
+        - name: id
+          in: query
+          schema:
+            type: string
+            example: R12345
+        - name: media-type
+          in: header
+          schema:
+            type: string
+            example: application/json
+      responses:
+        '200':
+          description: ''
+  /api/product/reviews/id:
+    get:
+      tags:
+        - Product
+      summary: Get Product Review IDs by ID
+      description: Get Product Review IDs by ID
+      operationId: getProductReviewIdsById
+      parameters:
+        - name: id
+          in: query
+          schema:
+            type: string
+            example: B00W1YIC4Y
+        - name: media-type
+          in: header
+          schema:
+            type: string
+            example: application/json
+      responses:
+        '200':
+          description: ''
+  /api/product/score:
+    get:
+      tags:
+        - Product
+      summary: Get Product Score by ID
+      description: Get Product Score by ID
+      operationId: getProductScoreById
+      parameters:
+        - name: id
+          in: query
+          schema:
+            type: string
+            example: B00W1YIC4Y
+        - name: media-type
+          in: header
+          schema:
+            type: string
+            example: application/json
+      responses:
+        '200':
+          description: ''
+  /api/product:
+    get:
+      tags:
+        - Product
+      summary: Get Products (paged)
+      description: Get Products on a page-by-page basis, or omit page to get all.
+      operationId: getProductsPaged
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: string
+            example: '464'
+        - name: length
+          in: query
+          schema:
+            type: string
+            example: '10'
+        - name: media-type
+          in: header
+          schema:
+            type: string
+            example: application/json
+      responses:
+        '200':
+          description: ''
+    put:
+      tags:
+        - Product
+      summary: Update Product by ID
+      description: Update Product by ID
+      operationId: updateProductById
+      parameters:
+        - name: id
+          in: query
+          schema:
+            type: string
+            example: '2'
+        - name: media-type
+          in: header
+          schema:
+            type: string
+            example: application/json
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                category:
+                  type: string
+                  example: Test
+                id:
+                  type: string
+                  example: '34'
+                title:
+                  type: string
+                  example: Test Edit
+            example:
+              category: Test
+              id: '34'
+              title: Test Edit
+      responses:
+        '200':
+          description: ''
+    post:
+      tags:
+        - Product
+      summary: Create Product
+      description: Create Product
+      operationId: createProduct
+      parameters:
+        - name: media-type
+          in: header
+          schema:
+            type: string
+            example: application/json
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                category:
+                  type: string
+                  example: Test
+                id:
+                  type: string
+                  example: '12345'
+                title:
+                  type: string
+                  example: My Test Product
+            example:
+              category: Test
+              id: '12345'
+              title: My Test Product
+      responses:
+        '200':
+          description: ''
+    delete:
+      tags:
+        - Product
+      summary: Delete Product by ID
+      description: Delete Product by ID
+      operationId: deleteProductById
+      parameters:
+        - name: id
+          in: query
+          schema:
+            type: string
+            example: B0002VS6HG
+        - name: media-type
+          in: header
+          schema:
+            type: string
+            example: application/json
+      responses:
+        '200':
+          description: ''
+  /api/review:
+    get:
+      tags:
+        - Review
+      summary: Get Review by ID
+      description: Get Review by ID
+      operationId: getReviewById
+      parameters:
+        - name: id
+          in: query
+          schema:
+            type: string
+            example: R2IZ50ZB10SRV2
+        - name: media-type
+          in: header
+          schema:
+            type: string
+            example: application/json
+      responses:
+        '200':
+          description: ''
+    put:
+      tags:
+        - Review
+      summary: Update Review by ID
+      description: Update Review by ID
+      operationId: updateReviewById
+      parameters:
+        - name: media-type
+          in: header
+          schema:
+            type: string
+            example: application/json
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                body:
+                  type: string
+                  example: Excelent
+                customer:
+                  type: number
+                  example: 2170640
+                date:
+                  type: string
+                  example: '2015-08-07'
+                helpful:
+                  type: number
+                  example: 0
+                id:
+                  type: string
+                  example: R1UKSHMGZU1T4O
+                product:
+                  type: string
+                  example: B004LLIKVU
+                rating:
+                  type: number
+                  example: 5
+                region:
+                  type: string
+                  example: US
+                title:
+                  type: string
+                  example: Five Stars
+                verified:
+                  type: boolean
+                  example: true
+                vine:
+                  type: boolean
+                  example: false
+                votes:
+                  type: number
+                  example: 0
+            example:
+              body: Excelent
+              customer: 2170640
+              date: '2015-08-07'
+              helpful: 0
+              id: R1UKSHMGZU1T4O
+              product: B004LLIKVU
+              rating: 5
+              region: US
+              title: Five Stars
+              verified: true
+              vine: false
+              votes: 0
+      responses:
+        '200':
+          description: ''
+  /api/review/:
+    get:
+      tags:
+        - Review
+      summary: Get Reviews (paged)
+      description: Get Reviews on a page-by-page basis, or omit page to get all.
+      operationId: getReviewsPaged
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: string
+            example: '0'
+        - name: length
+          in: query
+          schema:
+            type: string
+            example: '50'
+        - name: media-type
+          in: header
+          schema:
+            type: string
+            example: application/json
+      responses:
+        '200':
+          description: ''
+    post:
+      tags:
+        - Review
+      summary: Create Review
+      description: Create Review
+      operationId: createReview
+      parameters:
+        - name: media-type
+          in: header
+          schema:
+            type: string
+            example: application/json
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                body:
+                  type: string
+                  example: This review was made as a test of the system.
+                customer:
+                  type: number
+                  example: 1
+                date:
+                  type: string
+                  example: '2022-09-08'
+                helpful:
+                  type: number
+                  example: 0
+                id:
+                  type: string
+                  example: R1234
+                product:
+                  type: string
+                  example: '12345'
+                rating:
+                  type: number
+                  example: 5
+                region:
+                  type: string
+                  example: US
+                title:
+                  type: string
+                  example: Test Review
+                verified:
+                  type: boolean
+                  example: false
+                vine:
+                  type: boolean
+                  example: false
+                votes:
+                  type: number
+                  example: 0
+            example:
+              body: This review was made as a test of the system.
+              customer: 1
+              date: '2022-09-08'
+              helpful: 0
+              id: R1234
+              product: '12345'
+              rating: 5
+              region: US
+              title: Test Review
+              verified: false
+              vine: false
+              votes: 0
+      responses:
+        '200':
+          description: ''
+    delete:
+      tags:
+        - Review
+      summary: Delete Review by ID
+      description: Delete Review by ID
+      operationId: deleteReviewById
+      parameters:
+        - name: id
+          in: query
+          schema:
+            type: string
+            example: R2IZ50ZB10SRV2
+        - name: media-type
+          in: header
+          schema:
+            type: string
+            example: application/json
+      responses:
+        '200':
+          description: ''
+  /api/review/updateProduct:
+    patch:
+      tags:
+        - Review
+      summary: Update Review Product by ID
+      description: Update Review Product by ID
+      operationId: updateReviewProductById
+      parameters:
+        - name: id
+          in: query
+          schema:
+            type: string
+            example: R2IZ50ZB10SRV2
+        - name: media-type
+          in: header
+          schema:
+            type: string
+            example: application/json
+      requestBody:
+        content:
+          application/octet-stream:
+            example: 'B00W1YIC4Y'
+      responses:
+        '200':
+          description: ''
+  /api/review/updateCustomer:
+    put:
+      tags:
+        - Review
+      summary: Update Review Customer by ID
+      description: Update Review Customer by ID
+      operationId: updateReviewCustomerById
+      parameters:
+        - name: id
+          in: query
+          schema:
+            type: string
+            example: R2IZ50ZB10SRV2
+        - name: media-type
+          in: header
+          schema:
+            type: string
+            example: application/json
+      requestBody:
+        content:
+          application/octet-stream:
+            example: '2170640'
+      responses:
+        '200':
+          description: ''
+  /api/load:
+    post:
+      summary: Load Json
+      description: Load Json
+      operationId: loadJson
+      parameters:
+        - name: media-type
+          in: header
+          schema:
+            type: string
+            example: application/json
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                example: '[[path to dataset.json file on disc]]'
+                anyOf:
+                  - type: string
+                    example: '[[path to dataset.json file on disc]]'
+                  - type: number
+                    example: 0
+              example:
+                - '[[path to dataset.json file on disc]]'
+                - 0
+            example:
+              - '[[path to dataset.json file on disc]]'
+              - 0
+      responses:
+        '200':
+          description: ''
+  /api/stats:
+    get:
+      summary: Stats
+      description: Stats
+      operationId: stats
+      responses:
+        '200':
+          description: ''
+tags:
+  - name: Customer
+  - name: Product
+  - name: Review
