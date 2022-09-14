@@ -47,7 +47,7 @@
         </button>
     </div>
 </div>
-<div class="pusher" style="padding:4em 1em">
+<div class="pusher" style="padding:5em 1em">
     <div id="container"></div>
 </div>
 
@@ -161,7 +161,7 @@
     <div class="header">Update Customer</div>
     <div class="content">
         <form class="ui form" id="updateCustomerForm">
-            <div class="field">
+            <div class="field" hidden>
                 <label>ID</label>
                 <input type="number" min="1" step="1" name="id" placeholder="ID" readonly required>
             </div>
@@ -175,10 +175,10 @@
 </div>
 
 <div class="ui modal" id="updateProductModal">
-    <div class="header">Add Product</div>
+    <div class="header">Update Product</div>
     <div class="content">
         <form class="ui form" id="updateProductForm">
-            <div class="field">
+            <div class="field" hidden>
                 <label>ID</label>
                 <input type="text" name="id" placeholder="ID" readonly required>
             </div>
@@ -196,10 +196,10 @@
 </div>
 
 <div class="ui modal" id="updateReviewModal">
-    <div class="header">Add Review</div>
+    <div class="header">Update Review</div>
     <div class="content">
         <form class="ui equal width form" id="updateReviewForm">
-            <div class="field">
+            <div class="field" hidden>
                 <label>ID</label>
                 <input type="text" name="id" placeholder="ID" readonly required>
             </div>
@@ -225,15 +225,13 @@
                 <label>Body</label>
                 <input type="text"  name="body" placeholder="Body" required>
             </div>
-            <div class="fields">
-                <div class="field">
-                    <label>Customer</label>
-                    <input type="number" min="1" step="1" name="customer" readonly placeholder="Customer ID" required>
-                </div>
-                <div class="field">
-                    <label>Product</label>
-                    <input type="text" name="product" placeholder="Product ID" readonly required>
-                </div>
+            <div class="field" hidden>
+                <label>Customer</label>
+                <input type="text" name="customer" readonly placeholder="Customer ID" required>
+            </div>
+            <div class="field" hidden>
+                <label>Product</label>
+                <input type="text" name="product" placeholder="Product ID" readonly required>
             </div>
             <div class="fields">
                 <div class="field">
@@ -259,6 +257,16 @@
             </div>
             <button class="ui button" type="submit">Edit</button>
         </form>
+    </div>
+    <div class="actions">
+        <div class="ui action input">
+            <input type="text" id="productToUpdate" placeholder="Product...">
+            <button class="ui button" onclick="updateReviewProduct()">Change Product</button>
+        </div>
+        <div class="ui action input">
+            <input type="number" min="0" step="1" id="customerToUpdate" placeholder="Product...">
+            <button class="ui button" onclick="updateReviewCustomer()">Change Customer</button>
+        </div>
     </div>
 </div>
 

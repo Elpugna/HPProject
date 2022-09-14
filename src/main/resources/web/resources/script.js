@@ -1,8 +1,8 @@
 var dataTable = null
 var section = "customer"
 var columns = {
-    customer:['id','name','product reviews','update','delete'],
-    product:['category','id','title','reviews','update','delete'],
+    customer:['id','name','update','delete'],
+    product:['id','title','category','update','delete'],
     review:[
           "id",
           "title",
@@ -12,10 +12,10 @@ var columns = {
           "customer",
           "product",
           "region",
+          "votes",
           "helpful",
           "verified",
           "vine",
-          "votes",
           'update',
           "delete"]
     }
@@ -48,30 +48,86 @@ function setTable(table){
     $("#status").text( "- Showing "+_.capitalize(table)+"s")
     loadTable(table,columns[table].map(x=>({data:x})))
 }
-function showProductReviews(id){
-    fetch(baseUri+"product/"+id+"/reviews/all",
-        {method:'GET',
-           headers: {
-            'Content-Type': 'application/json',
-          }
-        }).then(x=>{
-            return x.json()
-        }).then(data=>  {
-            console.log(data)
-            $(`#viewProductModal .content`).html(
-                data
-                .map(r=> `
-                <div class="entry"><h3>Review</h3>
-                <div class="reviewData">
-                    ${_.toPairs(r).map(p=>"<div><b>"+p.join("</b>")+"</div>").join("<br>")}
-                </div>
-                </div>`)
-                .join("<hr>")
-            )
+function showProduct(id){
+Promise.all([
+  (fetch(baseUri+"product/"+id+"/reviews/all",
+          {method:'GET',
+             headers: {
+              'Content-Type': 'application/json',
+            }
+          }).then(x=>x.json())),
+  (fetch(baseUri+"product/"+id,
+          {method:'GET',
+             headers: {
+              'Content-Type': 'application/json',
+            }
+          }).then(x=>x.json()))
+    ])
+    .then((data)=>  {
+            $('body').modal({
+                title:`${data[1].title} Details <small style="float:right;color:#aaa">${data[1].category}</small>`,
+                class: '',
+                closeIcon: true,
+                content: "<div class='ui segments'>"+data[0].map(r=>"<div class='ui segment'>"+makeReview(r)+"</div>").join("")+"</div>",
+                actions: []
+            }).modal('show');
         });
-$(`#viewProductModal`).modal('show')
 }
-function showCustomerReviews(id){
+
+function makeRating(rating){
+    return `<div class="ui yellow rating disabled">
+        ${'<i class="star icon active"></i>'.repeat(rating)+
+          '<i class="star icon"></i>'.repeat(5-rating)}
+      </div>`
+}
+
+function makeReview(r){
+return `<div class="comment">
+            <div class="content">
+              <div class="metadata">
+                          <b class="author">
+                              ${r.title}
+                          </b>
+                ${r.verified?"<i class='check icon' title='Verified Purchase'></i>":""}
+               <div class="ui label" title="Review Votes">
+                   <i class="vote yea icon"></i> ${r.votes}
+               </div>
+               <div class="ui label" title="Helpful Votes">
+                  <i class="hands helping icon"></i> ${r.helpful}
+                </div>
+                ${r.vine?"<i class='pagelines icon' title='Part of the Vine Program'></i>":""}
+              </div>
+              <div class="text">
+              <div>
+                 ${makeRating(r.rating)}
+              </div>
+                ${r.body}
+              </div>
+              <div class="actions">
+                <i class="${r.region.toLowerCase()} flag" title="${r.region.toUpperCase()} Marketplace Purchase"></i>
+                <span class="date">${r.date} &nbsp;</span>
+              <span style="float:right"><small>User #${r.customer}</small>  </span>
+              </div>
+            </div>
+          </div>`
+}
+
+var productWithReviews = (tuple)=> `<div class="ui fluid card">
+                                           <div class="content">
+                                             <div class="header">${tuple[1].title}</div>
+                                             <div class="meta">${tuple[1].category}</div>
+                                             <div class="description">
+                                             <div class="ui raised segment">
+                                                 ${makeReview(tuple[0])}
+                                             </div>
+                                             </div>
+                                           </div>
+                                           <div class="extra content">
+                                               <b>Product:</b> #${tuple[1].id}
+                                             </div>
+                                         </div>`
+
+function showCustomer(id){
     fetch(baseUri+"customer/"+id+"/reviews/all",
         {method:'GET',
            headers: {
@@ -80,26 +136,33 @@ function showCustomerReviews(id){
         }).then(x=>{
             return x.json()
         }).then(data=>  {
-            console.log(data)
-            $(`#viewCustomerModal .content`).html(
-                data
-                .map(tuple=> `
-                <div class="entry"><h3>Product</h3>
-                <div class="productData">
-                    ${_.toPairs(tuple[1]).map(p=>"<div><b>"+p.join("</b>")+"</div>").join("<br>")}
-                </div>
-                <details>
-                <summary><b>Review</b></summary>
-                <div class="reviewData">
-                    ${_.toPairs(tuple[0]).map(p=>"<div><b>"+p.join("</b>")+"</div>").join("<br>")}
-                </div>
-                </details>
-                </div>`)
-                .join("<hr>")
-            )
+            $('body').modal({
+                title: 'Customer Details',
+                class: '',
+                closeIcon: true,
+                content: data.map(productWithReviews).join("<hr>"),
+                actions: []
+            }).modal('show');
         });
+}
 
-$(`#viewCustomerModal`).modal('show')
+function showReview(id){
+    fetch(baseUri+"review/"+id,
+        {method:'GET',
+           headers: {
+            'Content-Type': 'application/json',
+          }
+        }).then(x=>{
+            return x.json()
+        }).then(data=>  {
+            $('body').modal({
+                title: `Review Details <small style="float:right;color:#aaa">#<i>${data.id}</i></small>`,
+                class: '',
+                closeIcon: true,
+                content: makeReview(data),
+                actions: []
+            }).modal('show');
+        });
 }
 
 async function responseHandler(x){
@@ -183,8 +246,31 @@ function openUpdate(entity,id) {
             if((typeof v) =="boolean") $(`#${k}Update`).checkbox(v?"check":"uncheck")
             else document.forms[`update${_.capitalize(entity)}Form`][k].value=v
         })
+        $('#customerToUpdate').val(data.customer)
+        $('#productToUpdate').val(data.product)
         $(`#update${_.capitalize(entity)}Modal`).modal("show")
     });
+}
+
+function updateReviewCustomer(){
+    fetch(baseUri+"review/"+document.forms["updateReviewForm"]["id"].value+"/updateCustomer",
+            {
+               body: $('#customerToUpdate').val(),
+               method: 'PUT',
+               headers: {
+                'Content-Type': 'application/json',
+              }
+            }).then(responseHandler)
+}
+function updateReviewProduct(){
+    fetch(baseUri+"review/"+document.forms["updateReviewForm"]["id"].value+"/updateProduct",
+            {
+               body: $('#productToUpdate').val(),
+               method: 'PUT',
+               headers: {
+                'Content-Type': 'application/json',
+              }
+            }).then(responseHandler)
 }
 
 function loadTable(endpoint,format){
@@ -201,7 +287,6 @@ function loadTable(endpoint,format){
             },
             dataFilter: function(data){
                 var json = jQuery.parseJSON( data );
-                console.log(json.data)
                 json.data
                 .map(c=> {
                     _.set(c,"update",
@@ -212,14 +297,17 @@ function loadTable(endpoint,format){
                         `<button class="ui tertiary red button icon" onClick="performDelete('${section}','${c.id}')">
                             <i class="trash icon"></i>
                          </button>`)
-                    if(section=="customer") _.set(c,"product reviews",
-                        `<button class="ui tertiary button" onClick="showCustomerReviews('${c.id}')">View
-                         </button>`)
-                    if(section=="product") _.set(c,"reviews",
-                        `<button class="ui tertiary button" onClick="showProductReviews('${c.id}')">View
-                         </button>`)
+                    if(section=="customer") _.set(c,"id",`<a onClick="showCustomer('${c.id}')">${c.id}</a>`)
+                    if(section=="product")  _.set(c,"id",`<a onClick="showProduct('${c.id}')">${c.id}</a>`)
+
+                    if(section=="review"){
+                        _.set(c,"id",`<a onClick="showReview('${c.id}')">${c.id}</a>`)
+                        _.set(c,"rating", makeRating(c.rating))
+                        _.set(c,"region",`<i class="${c.region.toLowerCase()} flag"></i>`)
+                        _.set(c,"product",`<a onClick="showProduct('${c.product}')">${c.product}</a>`)
+                        _.set(c,"customer",`<a onClick="showCustomer('${c.customer}')">${c.customer}</a>`)
+                    }
                 })
-                console.log(json.data)
                 json.recordsTotal = json.total;
                 json.recordsFiltered = json.total;
                 return JSON.stringify( json );
