@@ -106,7 +106,7 @@ return `<div class="comment">
               <div class="actions">
                 <i class="${r.region.toLowerCase()} flag" title="${r.region.toUpperCase()} Marketplace Purchase"></i>
                 <span class="date">${r.date} &nbsp;</span>
-              <span style="float:right"><small>User #${r.customer}</small>  </span>
+              <span style="float:right"><small>User <a onClick="showCustomer(${r.customer})">#${r.customer}</a></small>  </span>
               </div>
             </div>
           </div>`
@@ -123,7 +123,7 @@ var productWithReviews = (tuple)=> `<div class="ui fluid card">
                                              </div>
                                            </div>
                                            <div class="extra content">
-                                               <b>Product:</b> #${tuple[1].id}
+                                               <b>Product:</b> <a onClick="showProduct('${tuple[1].id}')">#${tuple[1].id}</a>
                                              </div>
                                          </div>`
 

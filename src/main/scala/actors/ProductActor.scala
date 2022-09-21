@@ -27,23 +27,18 @@ object ProductActor {
   case class ProductUpdated(product: data.Product) extends MySerializable
 
   case class ProductState(
-      var opCount: Long,
       var product: Product,
       var reviews: mutable.Set[String]
   ) extends MySerializable
 
-  case object Read
-
   case object ReadReviews
 
-  case object End
 }
 
 case class ProductActor(id: String, store: ActorRef)
     extends PersistentActor
     with ActorLogging {
   var state: ProductState = ProductState(
-    0,
     Product(id),
     mutable.LinkedHashSet[String]()
   )
@@ -93,12 +88,15 @@ case class ProductActor(id: String, store: ActorRef)
         sender() ! state.reviews.remove(id)
       }
     case RemoveReview(id) =>
-      sender() ! Failure(NotFoundException(s"Product did not have Review $id"))
+      sender() ! Failure(
+        NotFoundException(
+          s"Product ${state.product.id} did not have Review $id"
+        )
+      )
   }
 
   def testAndSnap(): Unit = {
-    state.opCount += 1
-    if (state.opCount % 20 == 0) saveSnapshot(state)
+    if (lastSequenceNr % 100 == 0 && lastSequenceNr > 0) saveSnapshot(state)
   }
 
   override def persistenceId: String = s"product-actor-$id"

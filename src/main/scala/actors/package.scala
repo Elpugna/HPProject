@@ -18,6 +18,10 @@ case class RemoveReview(id: String) extends MySerializable
 
 case object ReadReviewIds
 
+case object Read
+
+case object End
+
 //common Events
 case class ReviewAdded(id: String) extends MySerializable
 
