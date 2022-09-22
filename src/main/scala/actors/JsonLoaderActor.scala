@@ -82,7 +82,7 @@ class JsonLoaderActor(store: ActorRef)
           toData(v)
         }
       source
-        .via(selectJson.drop(start).throttle(150, 1 seconds))
+        .via(selectJson.drop(start).throttle(500, 12 seconds))
         .via(parseJson)
         .mapConcat { case (c: Customer, p: Product, r: Review) =>
           List(CreateCustomer(c), CreateProduct(p), CreateReview(r))
