@@ -6,7 +6,7 @@ import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
 
 package object actors {
-  implicit val timeout: Timeout = 5 seconds
+  implicit val timeout: Timeout = 20 seconds
 }
 
 trait MySerializable

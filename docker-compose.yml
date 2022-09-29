@@ -16,8 +16,8 @@ services:
     environment: &environment
       CASSANDRA_CLUSTER_NAME: akka-hpproject-cluster
       CASSANDRA_SEEDS: "balthasar"
-      MAX_HEAP_SIZE: 2G
-      HEAP_NEWSIZE: 200M
+      MAX_HEAP_SIZE: 1536M
+      HEAP_NEWSIZE: 128M
   caspar:
     image: cassandra:4.0.3
     container_name: "caspar"
