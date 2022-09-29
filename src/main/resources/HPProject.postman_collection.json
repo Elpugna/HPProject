@@ -1,0 +1,902 @@
+{
+  "info": {
+    "_postman_id": "3eb34d89-7198-4d4a-ac0c-de0cb581e1f1",
+    "name": "HPProject",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Customer",
+      "item": [
+        {
+          "name": "Get Customers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "media-type",
+                "value": "application/json",
+                "type": "Header"
+              }
+            ],
+            "url": {
+              "raw": "localhost:8080/api/customer",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "customer"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Customers (paged)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "media-type",
+                "value": "application/json",
+                "type": "Header"
+              }
+            ],
+            "url": {
+              "raw": "localhost:8080/api/customer?page=5&length=30",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "customer"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "5"
+                },
+                {
+                  "key": "length",
+                  "value": "30"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Customer by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "media-type",
+                "value": "application/json",
+                "type": "Header"
+              }
+            ],
+            "url": {
+              "raw": "localhost:8080/api/customer/52079930",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "customer",
+                "52079930"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Customer Reviewed Products by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "media-type",
+                "value": "application/json",
+                "type": "Header"
+              }
+            ],
+            "url": {
+              "raw": "localhost:8080/api/customer/reviews/all?id=52079930",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "customer",
+                "reviews",
+                "all"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "52079930"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Customer Review IDs by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "media-type",
+                "value": "application/json",
+                "type": "Header"
+              }
+            ],
+            "url": {
+              "raw": "localhost:8080/api/customer/reviews/id?id=1",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "customer",
+                "reviews",
+                "id"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Customer by ID",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "media-type",
+                "value": "application/json",
+                "type": "Header"
+              }
+            ],
+            "url": {
+              "raw": "localhost:8080/api/customer?id=34",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "customer"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "34"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "media-type",
+                "value": "application/json",
+                "type": "Header"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\": \"\",\r\n    \"id\": 1\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "localhost:8080/api/customer",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "customer"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Customer by ID",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "media-type",
+                "value": "application/json",
+                "type": "Header"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"id\": \"35\",\r\n    \"name\": \"Test Edit\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "localhost:8080/api/customer?id=35",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "customer"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "35"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Product",
+      "item": [
+        {
+          "name": "Get Product by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "media-type",
+                "value": "application/json",
+                "type": "Header"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/product/B00H5BMMVW",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "product",
+                "B00H5BMMVW"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Product Reviews by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "media-type",
+                "value": "application/json",
+                "type": "Header"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/product/B00H5BMMVW/reviews/all",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "product",
+                "B00H5BMMVW",
+                "reviews",
+                "all"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Product Review IDs by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "media-type",
+                "value": "application/json",
+                "type": "Header"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/product/reviews/id?id=B00H5BMMVW",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "product",
+                "reviews",
+                "id"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "B00H5BMMVW"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Product Score by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "media-type",
+                "value": "application/json",
+                "type": "Header"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/product/B00H5BMMVW/score",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "product",
+                "B00H5BMMVW",
+                "score"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Product by ID",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "media-type",
+                "value": "application/json",
+                "type": "Header"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/product?id=B0002VS6HG",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "product"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "B0002VS6HG"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Products",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "media-type",
+                "value": "application/json",
+                "type": "Header"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/product",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "product"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Products (paged)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "media-type",
+                "value": "application/json",
+                "type": "Header"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/product?page=0&length=1000",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "product"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "length",
+                  "value": "1000"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Product",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "media-type",
+                "value": "application/json",
+                "type": "Header"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"id\": \"12345\",\r\n  \"title\": \"My Test Product\",\r\n  \"category\": \"Test\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/product",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "product"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Product by ID",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "media-type",
+                "value": "application/json",
+                "type": "Header"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"id\": \"34\",\r\n  \"title\": \"Test Edit\",\r\n  \"category\": \"Test\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/product?id=2",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "product"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "2"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Review",
+      "item": [
+        {
+          "name": "Get Review by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "media-type",
+                "value": "application/json",
+                "type": "Header"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/review/R1UKSHMGZU1T4O",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "review",
+                "R1UKSHMGZU1T4O"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Review by ID",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "media-type",
+                "value": "application/json",
+                "type": "Header"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/review?id=R2IZ50ZB10SRV2",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "review"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "R2IZ50ZB10SRV2"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Reviews",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "media-type",
+                "value": "application/json",
+                "type": "Header"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "B00W1YIC4Y",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/review",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "review"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Reviews (paged)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "media-type",
+                "value": "application/json",
+                "type": "Header"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/review?page=0&length=50",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "review"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "length",
+                  "value": "50"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "media-type",
+                "value": "application/json",
+                "type": "Header"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"body\": \"This review was made as a test of the system.\",\r\n  \"customer\": 1,\r\n  \"date\": \"2022-09-08\",\r\n  \"helpful\": 0,\r\n  \"id\": \"R1234\",\r\n  \"product\": \"12345\",\r\n  \"rating\": 5,\r\n  \"region\": \"US\",\r\n  \"title\": \"Test Review\",\r\n  \"verified\": false,\r\n  \"vine\": false,\r\n  \"votes\": 0\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/review",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "review"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Review by ID",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "media-type",
+                "value": "application/json",
+                "type": "Header"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"body\": \"Excelent\",\r\n    \"customer\": 2170640,\r\n    \"date\": \"2015-08-07\",\r\n    \"helpful\": 0,\r\n    \"id\": \"R1UKSHMGZU1T4O\",\r\n    \"product\": \"B004LLIKVU\",\r\n    \"rating\": 5,\r\n    \"region\": \"US\",\r\n    \"title\": \"Five Stars\",\r\n    \"verified\": true,\r\n    \"vine\": false,\r\n    \"votes\": 0\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/review/R1UKSHMGZU1T4O",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "review",
+                "R1UKSHMGZU1T4O"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Review Product by ID",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "media-type",
+                "value": "application/json",
+                "type": "Header"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "B00W1YIC4Y",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/review/R1UKSHMGZU1T4O/updateProduct",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "review",
+                "R1UKSHMGZU1T4O",
+                "updateProduct"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Review Customer by ID",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "media-type",
+                "value": "application/json",
+                "type": "Header"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "2170640",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/review/R1UKSHMGZU1T4O/updateCustomer",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "review",
+                "R1UKSHMGZU1T4O",
+                "updateCustomer"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Load Json",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "media-type",
+            "value": "application/json",
+            "type": "Header"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "[\r\n    \"[path//to//dataset.json]\",\r\n    0000\r\n]",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/load",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "load"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Stats",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/stats",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "stats"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

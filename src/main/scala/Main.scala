@@ -8,7 +8,7 @@ import akka.http.scaladsl.Http
 object Main {
 
   def main(args: Array[String]): Unit = {
-    implicit val system: ActorSystem = ActorSystem("D-AkkaSystem")
+    implicit val system: ActorSystem = ActorSystem("Y-AkkaSystem")
     val store = system.actorOf(Props(new StoreActor()), "StoreActor")
     val loader: ActorRef = system.actorOf(JsonLoaderActor.props(store))
     val router = Router(store, loader)

@@ -5,12 +5,18 @@ import actors.StoreActor._
 import actors._
 import data._
 
+import akka.NotUsed
 import akka.actor.ActorRef
+import akka.http.scaladsl.common.{
+  EntityStreamingSupport,
+  JsonEntityStreamingSupport
+}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{ExceptionHandler, Route}
 import akka.pattern.ask
+import akka.stream.scaladsl.Source
 
 import java.io.FileNotFoundException
 import scala.concurrent.Future
@@ -28,6 +34,8 @@ case class Router(store: ActorRef, loader: ActorRef)
     case NotFoundException(message)      => complete(404, message)
     case AlreadyExistsException(message) => complete(400, message)
   }
+  implicit val jsonStreamingSupport: JsonEntityStreamingSupport =
+    EntityStreamingSupport.json()
 
   def routes: Route = {
     pathEndOrSingleSlash {
@@ -59,7 +67,7 @@ case class Router(store: ActorRef, loader: ActorRef)
                     (page, length) =>
                       onSuccess(store ? ReadProductsPaged(page, length)) {
                         case (seq: Future[Seq[Product]], len: Int) =>
-                          onComplete(seq) { // TODO: check for possible uses of streams to optimize return here
+                          onComplete(seq) {
                             case Failure(exception) => throw exception
                             case Success(value) =>
                               complete(
@@ -70,11 +78,7 @@ case class Router(store: ActorRef, loader: ActorRef)
                       }
                   } ~
                     onSuccess(store ? ReadProducts) {
-                      case seq: Future[Seq[Product]] =>
-                        onComplete(seq) { // TODO: check for possible uses of streams to optimize return here
-                          case Failure(exception) => throw exception
-                          case Success(value)     => complete(value)
-                        }
+                      case source: Source[Product, NotUsed] => complete(source)
                     }
                 } ~
                   post {
@@ -101,25 +105,17 @@ case class Router(store: ActorRef, loader: ActorRef)
                         pathPrefix("all") {
                           get {
                             onSuccess(store ? ReadProductReviews(id)) {
-                              case seq: Future[Seq[Review]] =>
-                                onComplete(seq) { // TODO: check for possible uses of streams to optimize return here
-                                  case Failure(exception) => throw exception
-                                  case Success(value)     => complete(value)
-                                }
-                              case Failure(exception) => throw exception
+                              case s: Source[Review, NotUsed] => complete(s)
+                              case Failure(exception)         => throw exception
                             }
                           }
                         }
                     } ~
                       pathPrefix("score") {
                         get {
-                          onSuccess(store ? ReadProductReviews(id)) {
-                            case seq: Future[Seq[Review]] =>
-                              onComplete(seq) { // TODO: check for possible uses of streams to optimize return here
-                                case Failure(exception) => throw exception
-                                case Success(reviews) =>
-                                  complete(Rating(reviews))
-                              }
+                          onSuccess(store ? ReadProductScore(id)) {
+                            case s: Source[ClientRating, NotUsed] => complete(s)
+                            case Failure(exception)               => throw exception
                           }
                         }
                       } ~
@@ -153,7 +149,7 @@ case class Router(store: ActorRef, loader: ActorRef)
                     (page, length) =>
                       onSuccess(store ? ReadCustomersPaged(page, length)) {
                         case (seq: Future[Seq[Customer]], len: Int) =>
-                          onComplete(seq) { // TODO: check for possible uses of streams to optimize return here
+                          onComplete(seq) {
                             case Failure(exception) => throw exception
                             case Success(value) =>
                               complete(
@@ -164,11 +160,7 @@ case class Router(store: ActorRef, loader: ActorRef)
                       }
                   } ~
                     onSuccess(store ? ReadCustomers) {
-                      case seq: Future[Seq[Customer]] =>
-                        onComplete(seq) { // TODO: check for possible uses of streams to optimize return here
-                          case Failure(exception) => throw exception
-                          case Success(value)     => complete(value)
-                        }
+                      case source: Source[Customer, NotUsed] => complete(source)
                     }
                 } ~
                   post {
@@ -186,14 +178,8 @@ case class Router(store: ActorRef, loader: ActorRef)
                     pathPrefix("reviews") {
                       (pathPrefix("all") & get) {
                         onSuccess(store ? ReadCustomerReviewedProducts(id)) {
-                          case seq: Future[Iterable[(Review, Product)]] =>
-                            onComplete(seq) { // TODO: check for possible uses of streams to optimize return here
-                              case Failure(exception) => throw exception
-                              case Success(
-                                    value: Iterable[(Review, Product)]
-                                  ) =>
-                                complete(value)
-                            }
+                          case s: Source[(Review, Product), NotUsed] =>
+                            complete(s)
                           case Failure(exception) => throw exception
                         }
                       } ~
@@ -238,7 +224,7 @@ case class Router(store: ActorRef, loader: ActorRef)
                     (page, length) =>
                       onSuccess(store ? ReadReviewsPaged(page, length)) {
                         case (seq: Future[Seq[Review]], len: Int) =>
-                          onComplete(seq) { // TODO: check for possible uses of streams to optimize return here
+                          onComplete(seq) {
                             case Failure(exception) => throw exception
                             case Success(value) =>
                               complete(
@@ -249,11 +235,7 @@ case class Router(store: ActorRef, loader: ActorRef)
                       }
                   } ~
                     onSuccess(store ? ReadReviews) {
-                      case seq: Future[Seq[Review]] =>
-                        onComplete(seq) { // TODO: check for possible uses of streams to optimize return here
-                          case Failure(exception) => throw exception
-                          case Success(value)     => complete(value)
-                        }
+                      case source: Source[Review, NotUsed] => complete(source)
                     }
                 } ~
                   post {

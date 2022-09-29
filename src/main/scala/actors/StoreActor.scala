@@ -4,15 +4,16 @@ package actors
 import actors.StoreActor._
 import data._
 
+import akka.NotUsed
 import akka.actor.{ActorContext, ActorLogging, ActorRef}
 import akka.pattern.ask
 import akka.persistence._
+import akka.stream.scaladsl._
 
 import scala.Function.tupled
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.DurationInt
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 import scala.language.postfixOps
 import scala.util.Failure
 
@@ -24,6 +25,8 @@ object StoreActor {
   case class CreateProduct(product: Product)
 
   case class ReadProduct(id: String)
+
+  case class ReadProductScore(id: String)
 
   case class ReadProductReviews(id: String)
 
@@ -87,13 +90,11 @@ object StoreActor {
       extends MySerializable
 
   case class StoreState(
-      var opCount: Long,
       customers: mutable.LongMap[ActorEnabled],
       products: mutable.AnyRefMap[String, ActorEnabled],
       reviews: mutable.AnyRefMap[String, ActorEnabled]
   ) {
     def toSnap: StoreSnapState = StoreSnapState(
-      opCount,
       customers map tupled { (id, customerRef) => (id, customerRef.enabled) },
       products map tupled { (id, productRef) => (id, productRef.enabled) },
       reviews map tupled { (id, reviewRef) => (id, reviewRef.enabled) }
@@ -101,14 +102,12 @@ object StoreActor {
   }
 
   case class StoreSnapState(
-      opCount: Long,
       customers: mutable.LongMap[Boolean],
       products: mutable.AnyRefMap[String, Boolean],
       reviews: mutable.AnyRefMap[String, Boolean]
   ) {
     def fromSnap(implicit context: ActorContext, store: ActorRef): StoreState =
       StoreState(
-        opCount,
         customers map tupled { (id, enabled) =>
           (
             id,
@@ -163,7 +162,6 @@ object StoreActor {
 
 class StoreActor extends PersistentActor with ActorLogging {
   var state: StoreState = StoreState(
-    0,
     mutable.LongMap[ActorEnabled](),
     mutable.AnyRefMap[String, ActorEnabled](),
     mutable.AnyRefMap[String, ActorEnabled]()
@@ -176,30 +174,24 @@ class StoreActor extends PersistentActor with ActorLogging {
         s"product-actor-${product.id}"
       )
       state.products.addOne(product.id, ActorEnabled(actor, enabled = true))
-      state.opCount += 1
     case ProductRemoved(id) =>
       state.products.put(id, state.products(id).copy(enabled = false))
-      state.opCount += 1
     case CustomerCreated(customer) =>
       val actor = context.actorOf(
         CustomerActor.props(customer.id, self),
         s"customer-actor-${customer.id}"
       )
       state.customers.addOne(customer.id, ActorEnabled(actor, enabled = true))
-      state.opCount += 1
     case CustomerRemoved(id) =>
       state.customers.put(id, state.customers(id).copy(enabled = false))
-      state.opCount += 1
     case ReviewCreated(review) =>
       val actor = context.actorOf(
         ReviewActor.props(review.id, self),
         s"review-actor-${review.id}"
       )
       state.reviews.addOne(review.id, ActorEnabled(actor, enabled = true))
-      state.opCount += 1
     case ReviewRemoved(id) =>
       state.reviews.put(id, state.reviews(id).copy(enabled = false))
-      state.opCount += 1
     case SnapshotOffer(meta, snapshot: StoreSnapState) =>
       log.debug(
         s"Accepted snap $meta with:\n"
@@ -237,19 +229,35 @@ class StoreActor extends PersistentActor with ActorLogging {
         AlreadyExistsException(s"Product ${product.id} already existed")
       )
     case ReadProduct(id) if productIsAvailable(id) =>
-      state.products(id).ref forward ProductActor.Read
+      state.products(id).ref forward Read
+    case ReadProductScore(id) if productIsAvailable(id) =>
+      sender() ! Source
+        .future((state.products(id).ref ? ReadReviewIds).mapTo[Seq[String]])
+        .via(Flow[Seq[String]].mapConcat(identity))
+        .via(
+          Flow[String].mapAsync(8)(id =>
+            (state.reviews(id).ref ? Read).mapTo[Review]
+          )
+        )
+        .via(Flow[Review].fold(Rating()) { (acc, r) =>
+          acc.add(r.rating, r.verified.getOrElse(false))
+        })
+        .via(Flow[Rating].map(_.visual))
     case ReadProductReviews(id) if productIsAvailable(id) =>
       state.products(id).ref forward ProductActor.ReadReviews
     case ReadProductReviewIds(id) if productIsAvailable(id) =>
       state.products(id).ref forward ReadReviewIds
     case ReadProducts =>
-      sender() ! Future.sequence(
-        state.products.values.filter(_.enabled).map(_.ref ? ProductActor.Read)
-      )
+      sender() ! Source
+        .fromIterator(() => state.products.values.filter(_.enabled).iterator)
+        .via(Flow[ActorEnabled].mapAsync(8)(_.ref ? Read))
     case ReadProductsPaged(i, l) =>
-      val filtered = state.products.values.filter(_.enabled)
+      val pageLen = Math.min(l, 500)
+      val filtered =
+        state.products.values
+          .filter(_.enabled)
       sender() ! (Future.sequence(
-        filtered.slice(i * l, (i + 1) * l).map(_.ref ? ProductActor.Read)
+        filtered.slice(i * pageLen, (i + 1) * pageLen).map(_.ref ? Read)
       ), filtered.size)
     case UpdateProduct(id, product) if productIsAvailable(id) =>
       state.products(id).ref forward ProductActor.Update(product)
@@ -257,7 +265,7 @@ class StoreActor extends PersistentActor with ActorLogging {
       persist(ProductRemoved(id)) { _ =>
         val rem = state.products.remove(id).get
         state.products.put(id, rem.copy(enabled = false))
-        rem.ref forward ProductActor.Read
+        rem.ref forward Read
         testAndSnap()
       }
     case UpdateProduct(_, _) | RemoveProduct(_) | ReadProduct(_) |
@@ -282,50 +290,42 @@ class StoreActor extends PersistentActor with ActorLogging {
         AlreadyExistsException(s"Customer ${customer.id} already existed")
       )
     case ReadCustomer(id) if customerIsAvailable(id) =>
-      state.customers(id).ref forward CustomerActor.Read
+      state.customers(id).ref forward Read
     case ReadCustomerReviewedProducts(id) if customerIsAvailable(id) =>
       log.info(s"Getting Reviews from Customer $id")
       state.customers(id).ref forward CustomerActor.ReadReviewProducts
     case ReadCustomerReviewIds(id) if customerIsAvailable(id) =>
       state.customers(id).ref forward ReadReviewIds
     case ReadReviewedProducts(reviews) =>
-      log.info(s"Got  ${reviews.size} reviews to get products for")
-      val reply = Future.sequence(
-        state.reviews
-          .filter { case (k, actorEnabled) =>
-            reviews.contains(k) && actorEnabled.enabled
-          }
-          .values
-          .map(r =>
-            (r.ref ? ReviewActor.Read)
-              .map { case r: Review =>
-                Await.result(
-                  state.products(r.product).ref ? ProductActor.Read,
-                  100 millis
-                ) match {
-                  case p: Product => (r, p)
-                }
-              }
-          )
-      )
-      log.info(
-        s"replied with ${reply.value.getOrElse(None).toString} to ${sender.path}"
-      )
-      sender() ! reply
+      val reviewActors = (state.reviews filter tupled { (k, actorEnabled) =>
+        reviews.contains(k) && actorEnabled.enabled
+      }).values
+      val stream
+          : Source[ActorEnabled, NotUsed]#Repr[Review]#Repr[(Review, Any)] =
+        Source
+          .fromIterator(() => reviewActors.iterator)
+          .via(Flow[ActorEnabled].mapAsync(8) { rA =>
+            (rA.ref ? Read).mapTo[Review]
+          })
+          .via(Flow[Review].mapAsync(8) { r =>
+            (state.products(r.product).ref ? Read).map((r, _))
+          })
+      sender() ! stream
     case ReadCustomers =>
-      sender() ! Future.sequence(
-        state.customers.values.filter(_.enabled).map(_.ref ? CustomerActor.Read)
-      )
+      sender() ! Source
+        .fromIterator(() => state.customers.values.filter(_.enabled).iterator)
+        .via(Flow[ActorEnabled].mapAsync(8)(_.ref ? Read))
     case ReadCustomersPaged(i, l) =>
+      val pageLen = Math.min(l, 500)
       val filtered = state.customers.values.filter(_.enabled)
       sender() ! (Future.sequence(
-        filtered.slice(i * l, (i + 1) * l).map(_.ref ? CustomerActor.Read)
+        filtered.slice(i * pageLen, (i + 1) * pageLen).map(_.ref ? Read)
       ), filtered.size)
     case RemoveCustomer(id) if customerIsAvailable(id) =>
       persist(CustomerRemoved(id)) { _ =>
         val rem = state.customers.remove(id).get
         state.customers.put(id, rem.copy(enabled = false))
-        rem.ref forward CustomerActor.Read
+        rem.ref forward Read
         testAndSnap()
       }
     case UpdateCustomer(id, customer) if customerIsAvailable(id) =>
@@ -367,32 +367,34 @@ class StoreActor extends PersistentActor with ActorLogging {
         else ""
       sender() ! Failure(NotFoundException(List(c, p).mkString(". ")))
     case ReadReview(id) if reviewIsAvailable(id) =>
-      state.reviews(id).ref forward ReviewActor.Read
+      state.reviews(id).ref forward Read
     case ReadReviews =>
-      sender() ! Future.sequence(
-        state.reviews.values.filter(_.enabled).map(_.ref ? ReviewActor.Read)
-      )
+      sender() ! Source
+        .fromIterator(() => state.reviews.values.filter(_.enabled).iterator)
+        .via(Flow[ActorEnabled].mapAsync(8)(_.ref ? Read))
     case ReadReviewsPaged(i, l) =>
+      val pageLen = Math.min(l, 500)
       val filtered = state.reviews.values.filter(_.enabled)
       sender() ! (Future.sequence(
-        filtered.slice(i * l, (i + 1) * l).map(_.ref ? ReviewActor.Read)
+        filtered.slice(i * pageLen, (i + 1) * pageLen).map(_.ref ? Read)
       ), filtered.size)
     case ReadReviewIdList(reviews) =>
       sender() ! reviews.filter(reviewIsAvailable)
     case ReadReviewList(reviews) =>
-      sender() ! Future.sequence(
-        state.reviews
-          .filter { case (k, reviewRef) =>
-            reviews.contains(k) && reviewRef.enabled
-          }
-          .values
-          .map(_.ref ? ReviewActor.Read)
-      )
+      val reviewActors = (state.reviews filter tupled { (k, actorEnabled) =>
+        reviews.contains(k) && actorEnabled.enabled
+      }).values
+      val stream: Source[ActorEnabled, NotUsed]#Repr[Review] = Source
+        .fromIterator(() => reviewActors.iterator)
+        .via(Flow[ActorEnabled].mapAsync(8) { rA =>
+          (rA.ref ? Read).mapTo[Review]
+        })
+      sender() ! stream
     case RemoveReview(id) if reviewIsAvailable(id) =>
       persist(ReviewRemoved(id)) { _ =>
         val rem = state.reviews.remove(id).get
         state.reviews.put(id, rem.copy(enabled = false))
-        rem.ref forward ReviewActor.Read
+        rem.ref forward Read
         testAndSnap()
       }
     case UpdateReview(id, review) if reviewIsAvailable(id) =>
@@ -400,19 +402,20 @@ class StoreActor extends PersistentActor with ActorLogging {
     case UpdateReviewCustomer(id, customer)
         if reviewIsAvailable(id) && customerIsAvailable(customer) =>
       val send = sender()
-      (state.reviews(id).ref ? ReviewActor.Read).map({ case oldReview: Review =>
-        (state.customers(oldReview.customer).ref ? RemoveReview(id)).map {
-          case ex @ Failure(_: NotFoundException) =>
-            send ! ex
+      val result = for {
+        oldReview <- (state.reviews(id).ref ? Read).mapTo[Review]
+        remove <- state.customers(oldReview.customer).ref ? RemoveReview(id)
+        re <- remove match {
+          case ex @ Failure(_: NotFoundException) => Future(ex)
           case _ =>
             state.customers(customer).ref ! AddReview(id)
-            send ! Await.result[Review](
-              (state.reviews(id).ref ? ReviewActor.SetCustomer(customer))
-                .mapTo[Review],
-              timeout.duration
-            )
+            (state.reviews(id).ref ? ReviewActor.SetCustomer(customer))
+              .mapTo[Review]
         }
-      })
+      } yield re
+      result match {
+        case f: Future[Any] => f.onComplete(send ! _.get)
+      }
     case UpdateReviewCustomer(id, customer) =>
       val p =
         if (!reviewIsAvailable(id))
@@ -426,19 +429,20 @@ class StoreActor extends PersistentActor with ActorLogging {
     case UpdateReviewProduct(id, product)
         if reviewIsAvailable(id) && productIsAvailable(product) =>
       val send = sender()
-      (state.reviews(id).ref ? ReviewActor.Read).map({ case oldReview: Review =>
-        (state.products(oldReview.product).ref ? RemoveReview(id)).map {
-          case ex @ Failure(_: NotFoundException) =>
-            send ! ex
+      val result = for {
+        oldReview <- (state.reviews(id).ref ? Read).mapTo[Review]
+        remove <- state.products(oldReview.product).ref ? RemoveReview(id)
+        re <- remove match {
+          case ex @ Failure(_: NotFoundException) => Future(ex)
           case _ =>
             state.products(product).ref ! AddReview(id)
-            send ! Await.result[Review](
-              (state.reviews(id).ref ? ReviewActor.SetProduct(product))
-                .mapTo[Review],
-              timeout.duration
-            )
+            (state.reviews(id).ref ? ReviewActor.SetProduct(product))
+              .mapTo[Review]
         }
-      })
+      } yield re
+      result match {
+        case f: Future[Any] => f.onComplete(send ! _.get)
+      }
     case UpdateReviewProduct(id, product) =>
       val p =
         if (!reviewIsAvailable(id))
@@ -470,8 +474,8 @@ class StoreActor extends PersistentActor with ActorLogging {
   }
 
   def testAndSnap(): Unit = {
-    state.opCount += 1
-    if (state.opCount % 100 == 0) saveSnapshot(state.toSnap)
+    if (lastSequenceNr % 300 == 0 && lastSequenceNr > 0)
+      saveSnapshot(state.toSnap)
   }
 
   def customerIsAvailable(id: Long): Boolean =

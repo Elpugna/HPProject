@@ -9,7 +9,7 @@ import akka.actor.{ActorLogging, ActorRef, Props}
 import akka.persistence.{PersistentActor, SnapshotOffer}
 
 import scala.collection.mutable
-import scala.util.{Failure, Success}
+import scala.util.Failure
 
 object CustomerActor {
   def props(id: Long, store: ActorRef): Props = Props(
@@ -27,23 +27,18 @@ object CustomerActor {
   case class CustomerUpdated(product: Customer) extends MySerializable
 
   case class CustomerState(
-      var opCount: Long,
       var customer: Customer,
       var reviews: mutable.Set[String]
   ) extends MySerializable
 
-  case object Read
-
   case object ReadReviewProducts
 
-  case object End
 }
 
 class CustomerActor(id: Long, store: ActorRef)
     extends PersistentActor
     with ActorLogging {
   var state: CustomerState = CustomerState(
-    0,
     Customer(id),
     mutable.LinkedHashSet[String]()
   )
@@ -86,10 +81,14 @@ class CustomerActor(id: Long, store: ActorRef)
       persist(ReviewRemoved(id)) { _ =>
         state.reviews.remove(id)
         testAndSnap()
-        sender() ! Success(state.reviews.remove(id))
+        sender() ! state.reviews.remove(id)
       }
     case RemoveReview(id) =>
-      Failure(NotFoundException(s"Customer did not have Review $id"))
+      sender() ! Failure(
+        NotFoundException(
+          s"Customer ${state.customer.id} did not have Review $id"
+        )
+      )
     case ReadReviewProducts =>
       store forward ReadReviewedProducts(state.reviews.toList)
     case ReadReviewIds =>
@@ -99,8 +98,7 @@ class CustomerActor(id: Long, store: ActorRef)
   }
 
   def testAndSnap(): Unit = {
-    state.opCount += 1
-    if (state.opCount % 20 == 0) saveSnapshot(state)
+    if (lastSequenceNr % 100 == 0 && lastSequenceNr > 0) saveSnapshot(state)
   }
 
   override def persistenceId: String = s"customer-actor-$id"

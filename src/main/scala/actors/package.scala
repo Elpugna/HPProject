@@ -6,7 +6,7 @@ import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
 
 package object actors {
-  implicit val timeout: Timeout = 5 seconds
+  implicit val timeout: Timeout = 20 seconds
 }
 
 trait MySerializable
@@ -17,6 +17,10 @@ case class AddReview(id: String) extends MySerializable
 case class RemoveReview(id: String) extends MySerializable
 
 case object ReadReviewIds
+
+case object Read
+
+case object End
 
 //common Events
 case class ReviewAdded(id: String) extends MySerializable
