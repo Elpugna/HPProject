@@ -30,5 +30,5 @@ case class ReviewRemoved(id: String) extends MySerializable
 //common Exceptions
 case class NotFoundException(message: String) extends RuntimeException(message)
 
-case class AlreadyExistsException(message: String)
+class AlreadyExistsException(message: String)
     extends RuntimeException(message)

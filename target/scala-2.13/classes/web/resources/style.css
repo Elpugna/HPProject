@@ -1,0 +1,29 @@
+body{
+font-size:13px
+}
+
+thead {
+  font-variant: small-caps;
+  font-weight: bold;
+}
+.entry{
+    margin: 5px;
+    box-shadow: 1px 1px 3px 1px black;
+    padding: 1em;
+    background-color: #FCFEFC;
+}
+.reviewData,.productData{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content: space-between;
+}
+.productData{
+    flex-direction:row-reverse;
+}
+.reviewData div,.productData div{
+    margin: 0 1em;
+}
+.reviewData div b, .productData div b {
+  text-transform: capitalize;
+  margin-right: 0.3rem;
+}

@@ -226,7 +226,7 @@ class StoreActor extends PersistentActor with ActorLogging {
     case CreateProduct(product) =>
       log.info(s"Product ${product.id} already existed")
       sender() ! Failure(
-        AlreadyExistsException(s"Product ${product.id} already existed")
+        new AlreadyExistsException(s"Product ${product.id} already existed")
       )
     case ReadProduct(id) if productIsAvailable(id) =>
       state.products(id).ref forward Read
@@ -253,12 +253,8 @@ class StoreActor extends PersistentActor with ActorLogging {
         .via(Flow[ActorEnabled].mapAsync(8)(_.ref ? Read))
     case ReadProductsPaged(i, l) =>
       val pageLen = Math.min(l, 500)
-      val filtered =
-        state.products.values
-          .filter(_.enabled)
-      sender() ! (Future.sequence(
-        filtered.slice(i * pageLen, (i + 1) * pageLen).map(_.ref ? Read)
-      ), filtered.size)
+      val filtered = state.products.values.filter(_.enabled)
+      sender() ! (Future.sequence( filtered.slice(i * pageLen, (i + 1) * pageLen).map(_.ref ? Read) ), filtered.size)
     case UpdateProduct(id, product) if productIsAvailable(id) =>
       state.products(id).ref forward ProductActor.Update(product)
     case RemoveProduct(id) if productIsAvailable(id) =>
@@ -287,7 +283,7 @@ class StoreActor extends PersistentActor with ActorLogging {
     case CreateCustomer(customer) =>
       log.info(s"Customer ${customer.id} already existed")
       sender() ! Failure(
-        AlreadyExistsException(s"Customer ${customer.id} already existed")
+        new AlreadyExistsException(s"Customer ${customer.id} already existed")
       )
     case ReadCustomer(id) if customerIsAvailable(id) =>
       state.customers(id).ref forward Read
@@ -354,7 +350,7 @@ class StoreActor extends PersistentActor with ActorLogging {
     case CreateReview(review) if state.reviews.contains(review.id) =>
       log.info(s"Review ${review.id} already existed")
       sender() ! Failure(
-        AlreadyExistsException(s"Review ${review.id} already existed")
+        new AlreadyExistsException(s"Review ${review.id} already existed")
       )
     case CreateReview(review) =>
       val c =

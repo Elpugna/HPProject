@@ -32,7 +32,7 @@ case class Router(store: ActorRef, loader: ActorRef)
   implicit val exceptionHandler: ExceptionHandler = ExceptionHandler {
     case _: FileNotFoundException        => complete(404, "File not found.")
     case NotFoundException(message)      => complete(404, message)
-    case AlreadyExistsException(message) => complete(400, message)
+    case x: AlreadyExistsException => complete(400, x.getMessage)
   }
   implicit val jsonStreamingSupport: JsonEntityStreamingSupport =
     EntityStreamingSupport.json()
